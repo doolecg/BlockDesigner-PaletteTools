@@ -13,25 +13,30 @@
   <a href="https://github.com/doolecg/BlockDesigner-PaletteTools/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/doolecg/BlockDesigner-PaletteTools?label=release"></a>
   <a href="https://github.com/doolecg/BlockDesigner-PaletteTools/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/doolecg/BlockDesigner-PaletteTools/total"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/github/license/doolecg/BlockDesigner-PaletteTools"></a>
+  <img alt="Platform: Windows" src="https://img.shields.io/badge/platform-Windows-0078D6">
   <a href="https://github.com/doolecg/BlockDesigner"><img alt="BlockDesigner plugin API 5" src="https://img.shields.io/badge/BlockDesigner-plugin%20API%205-46C46E"></a>
 </p>
 
 ---
 
-**Palette Tools** is a plugin for [BlockDesigner](https://github.com/doolecg/BlockDesigner), the Windows editor for Minecraft builds. It is released
+Palette Tools is a plugin for [BlockDesigner](https://github.com/doolecg/BlockDesigner), the Windows editor for Minecraft builds. It is released
 on its own, separately from the app. It needs **BlockDesigner 0.4.17 or later** (plugin API 5).
 
 **Contents:** [Download](#download-and-install) · [Features](#features) · [Building from source](#building-from-source) · [Project layout](#project-layout)
 
 ## Download and install
 
-1. Download `palette-tools-<version>.jar` from the [releases page](https://github.com/doolecg/BlockDesigner-PaletteTools/releases/latest).
+Get the latest version from the [releases page](https://github.com/doolecg/BlockDesigner-PaletteTools/releases/latest):
+
+1. Download `palette-tools-<version>.jar`.
 2. In BlockDesigner open **Plugins (puzzle icon) › Manage plugins… › Install…** and pick the jar.
 
 It is on straight away. You can switch it off, reload or uninstall it in the same window. From 1.0.2 on it **updates itself** in BlockDesigner 0.4.16 and later (Plugins › Manage plugins… › Update plugins automatically). Plugins run with the same
 access as BlockDesigner itself, so only install ones you trust.
 
 ## Features
+
+### Palette tool
 
 - **Palette tool** (Shift+P): repaints the selection in the 3D view.
   - **Select right in the tool:** the left button selects as in Select mode (click, drag a box, Shift adds, Ctrl
@@ -41,16 +46,25 @@ access as BlockDesigner itself, so only install ones you trust.
     drop a block on it, right-click to take it out of a mix, the wheel to change its share).
   - **Live preview:** the result shows as ghosts and follows every change. **Right-click or Enter** applies it as one
     undo step, **R** rolls new random picks, **Esc** hides the preview.
+
+### Transforms
+
 - **Transforms** with the same three (Plugins menu), each in a window with a live preview:
   - **Weathering** turns a share of stone blocks cracked or mossy (stairs, slabs and walls too).
   - **Palette swap** swaps one material for another (oak → spruce turns planks, stairs, slabs, fences and doors),
     keeping each block's facing and shape.
   - **Gradient** repaints from the first block to the last along an axis or out from the middle, with a random blend,
     an even dither pattern or hard bands, once or repeated (mirrored for stripes).
+
+### Panels
+
 - **Gradients panel:** preset gradients drawn like hotbars of up to nine blocks. Click one to paint with it in the
   Palette tool, put it in the hotbar, or save your hotbar as a gradient of your own.
 - **Palette panel:** the blocks of the selection (or every visible layer) with a colour swatch and a count, most used
   first.
+
+### Import and export
+
 - **Colour palette exporter:** writes the build's blocks as a GIMP / Krita / Inkscape palette (`.gpl`).
 - **Pixel art importer:** turns a picture into blocks, matching each pixel to wool, concrete or terracotta, upright or
   lying flat.
@@ -62,7 +76,6 @@ You need Windows and a JDK 26 (Temurin 26 is what BlockDesigner uses; set `org.g
 
 ```
 ./gradlew jar      # build/libs/palette-tools-<version>.jar
-./gradlew test     # run the tests
 ```
 
 The plugin compiles against the BlockDesigner plugin API jars in [`libs/`](libs) (from BlockDesigner 0.4.17). The app
@@ -77,9 +90,17 @@ GitHub release tagged with the version.
 For writing plugins, see BlockDesigner's [plugin guide](https://github.com/doolecg/BlockDesigner/blob/main/PLUGINS.md) and
 [API reference](https://github.com/doolecg/BlockDesigner/blob/main/docs/plugin-api-reference.md).
 
+### Tests
+
+```
+./gradlew test
+```
+
+The tests cover the plugin's logic that runs without the app, against the API jars in `libs/`.
+
 ## Project layout
 
-| Path | What it is |
+| Path | What it does |
 |---|---|
 | `src/main/java` | The plugin's code |
 | `src/main/resources/blockdesigner-plugin.json` | The manifest BlockDesigner reads: id, name, version, main class, API level |
@@ -88,4 +109,4 @@ For writing plugins, see BlockDesigner's [plugin guide](https://github.com/doole
 
 ## License
 
-[MIT](LICENSE).
+[MIT](LICENSE)
