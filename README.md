@@ -5,21 +5,21 @@
 <h1 align="center">Palette Tools</h1>
 
 <p align="center">
-  Block palette tools for BlockDesigner: weathering, palette swap and gradients with a live preview,<br>
-  a Palette panel, a colour palette exporter, a pixel art importer and a Wall tool.
+  Block palette tools for BlockDesigner: a Palette tool that repaints the selection with a live preview<br>
+  (palette swap, weathering, gradients), preset gradients, a Palette panel, a colour palette exporter and a pixel art importer.
 </p>
 
 <p align="center">
   <a href="https://github.com/doolecg/BlockDesigner-PaletteTools/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/doolecg/BlockDesigner-PaletteTools?label=release"></a>
   <a href="https://github.com/doolecg/BlockDesigner-PaletteTools/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/doolecg/BlockDesigner-PaletteTools/total"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/github/license/doolecg/BlockDesigner-PaletteTools"></a>
-  <a href="https://github.com/doolecg/BlockDesigner"><img alt="BlockDesigner plugin API 2" src="https://img.shields.io/badge/BlockDesigner-plugin%20API%202-46C46E"></a>
+  <a href="https://github.com/doolecg/BlockDesigner"><img alt="BlockDesigner plugin API 5" src="https://img.shields.io/badge/BlockDesigner-plugin%20API%205-46C46E"></a>
 </p>
 
 ---
 
 **Palette Tools** is a plugin for [BlockDesigner](https://github.com/doolecg/BlockDesigner), the Windows editor for Minecraft builds. It is released
-on its own, separately from the app. It needs **BlockDesigner 0.4.4 or later** (plugin API 2).
+on its own, separately from the app. It needs **BlockDesigner 0.4.17 or later** (plugin API 5).
 
 **Contents:** [Download](#download-and-install) · [Features](#features) · [Building from source](#building-from-source) · [Project layout](#project-layout)
 
@@ -33,20 +33,27 @@ access as BlockDesigner itself, so only install ones you trust.
 
 ## Features
 
-- **Transforms with a live preview** (Plugins menu), each shown as a ghost before you apply it:
+- **Palette tool** (Shift+P): repaints the selection in the 3D view.
+  - **Select right in the tool:** the left button selects as in Select mode (click, drag a box, Shift adds, Ctrl
+    removes), or bring a selection from Select mode.
+  - **Choose what to do** in its options, bottom left: **Palette swap**, **Weathering** or **Gradient**. Only the
+    chosen mode's options show, and blocks are picked in small hotbar-style slots (click one to use the held block,
+    drop a block on it, right-click to take it out of a mix, the wheel to change its share).
+  - **Live preview:** the result shows as ghosts and follows every change. **Right-click or Enter** applies it as one
+    undo step, **R** rolls new random picks, **Esc** hides the preview.
+- **Transforms** with the same three (Plugins menu), each in a window with a live preview:
   - **Weathering** turns a share of stone blocks cracked or mossy (stairs, slabs and walls too).
   - **Palette swap** swaps one material for another (oak → spruce turns planks, stairs, slabs, fences and doors),
     keeping each block's facing and shape.
-  - **Gradient** repaints from one end to the other through a list of blocks, blended so the bands don't show.
+  - **Gradient** repaints from the first block to the last along an axis or out from the middle, with a random blend,
+    an even dither pattern or hard bands, once or repeated (mirrored for stripes).
+- **Gradients panel:** preset gradients drawn like hotbars of up to nine blocks. Click one to paint with it in the
+  Palette tool, put it in the hotbar, or save your hotbar as a gradient of your own.
 - **Palette panel:** the blocks of the selection (or every visible layer) with a colour swatch and a count, most used
   first.
 - **Colour palette exporter:** writes the build's blocks as a GIMP / Krita / Inkscape palette (`.gpl`).
 - **Pixel art importer:** turns a picture into blocks, matching each pixel to wool, concrete or terracotta, upright or
   lying flat.
-- **Wall tool:** drag out a straight wall from a block mix (70% stone bricks, 30% mossy by default) or the held block;
-  the wheel changes its height.
-
-It is also the worked example for plugin API 2: transforms, panels, tools, importers, options and scene events.
 
 ## Building from source
 
@@ -58,7 +65,7 @@ You need Windows and a JDK 26 (Temurin 26 is what BlockDesigner uses; set `org.g
 ./gradlew test     # run the tests
 ```
 
-The plugin compiles against the BlockDesigner plugin API jars in [`libs/`](libs) (from BlockDesigner 0.4.16). The app
+The plugin compiles against the BlockDesigner plugin API jars in [`libs/`](libs) (from BlockDesigner 0.4.17). The app
 provides them, and JavaFX, at runtime, so they are never bundled into the plugin. To target a newer API, replace them
 with the jars from a newer BlockDesigner build (`./gradlew :plugin-api:jar :core:jar` in the
 [BlockDesigner repository](https://github.com/doolecg/BlockDesigner)) and update the file names in `build.gradle.kts`.
