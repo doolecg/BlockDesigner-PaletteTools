@@ -28,7 +28,7 @@ on its own, separately from the app. It needs **BlockDesigner 0.4.4 or later** (
 1. Download `palette-tools-<version>.jar` from the [releases page](https://github.com/doolecg/BlockDesigner-PaletteTools/releases/latest).
 2. In BlockDesigner open **Plugins (puzzle icon) › Manage plugins… › Install…** and pick the jar.
 
-It is on straight away. You can switch it off, reload or uninstall it in the same window. Plugins run with the same
+It is on straight away. You can switch it off, reload or uninstall it in the same window. From 1.0.2 on it **updates itself** in BlockDesigner 0.4.16 and later (Plugins › Manage plugins… › Update plugins automatically). Plugins run with the same
 access as BlockDesigner itself, so only install ones you trust.
 
 ## Features
@@ -58,7 +58,7 @@ You need Windows and a JDK 26 (Temurin 26 is what BlockDesigner uses; set `org.g
 ./gradlew test     # run the tests
 ```
 
-The plugin compiles against the BlockDesigner plugin API jars in [`libs/`](libs) (from BlockDesigner 0.4.15). The app
+The plugin compiles against the BlockDesigner plugin API jars in [`libs/`](libs) (from BlockDesigner 0.4.16). The app
 provides them, and JavaFX, at runtime, so they are never bundled into the plugin. To target a newer API, replace them
 with the jars from a newer BlockDesigner build (`./gradlew :plugin-api:jar :core:jar` in the
 [BlockDesigner repository](https://github.com/doolecg/BlockDesigner)) and update the file names in `build.gradle.kts`.

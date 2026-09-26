@@ -1,3 +1,17 @@
+# Palette Tools 1.0.2
+
+Palette Tools now updates itself.
+
+**Needs BlockDesigner 0.4.4 or later** (plugin API 2); automatic updates need BlockDesigner 0.4.16 or later. Install this version once by hand: download `palette-tools-1.0.2.jar` below, then in BlockDesigner open **Plugins › Manage plugins… › Install…** and pick it (it replaces the older version).
+
+## New
+- **Updates itself.** Its manifest now links this repository as its release source, so BlockDesigner 0.4.16 and later install new releases of it automatically.
+
+## Changed
+- Built against the BlockDesigner 0.4.16 plugin API.
+
+---
+
 # Palette Tools 1.0.1
 
 Kept up to date with BlockDesigner 0.4.15: built and tested against its plugin API. Nothing changes in how it works.
