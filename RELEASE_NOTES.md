@@ -1,3 +1,15 @@
+# Palette Tools 1.1.1
+
+Kept up to date with BlockDesigner 0.4.18: built and tested against its plugin API. Nothing changes in how it works.
+
+**Needs BlockDesigner 0.4.17 or later** (plugin API 5). BlockDesigner 0.4.16 and later update to it by themselves.
+
+## Changed
+- Built against the BlockDesigner 0.4.18 plugin API.
+- README in the same format as BlockDesigner's.
+
+---
+
 # Palette Tools 1.1.0
 
 A **Palette tool** that repaints the selection right in the 3D view, preset gradients, and more ways to make a gradient. The Wall tool is gone: BlockDesigner's own Build-mode shapes do walls.
