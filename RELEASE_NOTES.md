@@ -1,3 +1,23 @@
+# Palette Tools 1.2.0
+
+Its Palette and Gradients pages are easier to read, and the Palette tool's key can now be changed.
+
+**Needs BlockDesigner 0.4.24 or later** (plugin API 6). Older BlockDesigners keep 1.1.3 until BlockDesigner itself is updated.
+
+## New
+- **The Palette tool's key** (Shift+P) can be changed in Settings › Keybinds.
+- **Help and units** on the options of the Palette tool, the transforms, the colour palette exporter and the importer.
+
+## Changed
+- **Palette page:** block icons, a filter at the top, and every kind of block, not just the first 200. What it counts is at the bottom. It recounts a moment after you stop editing.
+- **Gradients page:** your own gradients and the built-in ones in two sections. **+** saves the hotbar as a gradient; deleting one of yours asks first.
+- **The importer is now called "Simple pixel art (wool, concrete or terracotta)"**, so it's easy to tell apart from Pixel Art Generator's when BlockDesigner asks which one to use.
+
+## Fixed
+- **Block icons on both pages** show once Minecraft's assets have loaded, instead of grey squares until something changed.
+
+---
+
 # Palette Tools 1.1.3
 
 Kept up to date with BlockDesigner 0.4.23: built and tested against its plugin API. Nothing changes in how it works.

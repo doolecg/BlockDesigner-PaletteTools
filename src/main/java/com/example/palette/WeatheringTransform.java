@@ -38,8 +38,10 @@ final class WeatheringTransform implements PluginTransform {
     @Override
     public Options options() {
         return Options.builder()
-                .decimal("amount", "Weathered", 0.35, 0, 1)
-                .decimal("moss", "Of those, mossy", 0.5, 0, 1)
+                .decimal("amount", "Weathered", 0.35, 0, 1).unit("%")
+                .help("How many of the blocks get cracked or mossy.")
+                .decimal("moss", "Of those, mossy", 0.5, 0, 1).unit("%")
+                .help("The rest crack.")
                 .toggle("bottomUp", "More moss near the ground", true)
                 .build();
     }

@@ -6,19 +6,20 @@ import io.blockdesigner.plugin.BlockPattern;
 import io.blockdesigner.plugin.PanelContext;
 import io.blockdesigner.plugin.PluginContext;
 import io.blockdesigner.plugin.PluginPanel;
-import javafx.geometry.Insets;
+import io.blockdesigner.plugin.ui.Controls;
+import io.blockdesigner.plugin.ui.EmptyState;
+import io.blockdesigner.plugin.ui.Icon;
+import io.blockdesigner.plugin.ui.PanelScaffold;
+import io.blockdesigner.plugin.ui.Section;
+import io.blockdesigner.plugin.ui.Theme;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.ImageView;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 import java.io.IOException;
@@ -27,16 +28,17 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Preset gradients, each drawn like a hotbar of up to nine blocks. Click one to paint with it: the Palette tool is
- * picked with that gradient. The hotbar button puts the blocks in the hotbar instead; the current hotbar can be saved
- * as a preset of your own (kept in the plugin's data folder).
+ * Gradients, each drawn as a strip of up to nine block slots: your own (saved from the hotbar, kept in the plugin's
+ * data folder) and the built-in ones. Click a strip to paint with it: the Palette tool is picked with that gradient.
+ * The Hotbar button puts the blocks in the hotbar instead.
  */
 final class GradientsPanel implements PluginPanel {
     private static final double SLOT = 26;
 
     private final String paletteTool;
     private PanelContext panel;
-    private VBox rows;
+    private VBox own;
+    private VBox builtIn;
 
     /** @param paletteTool the id of the tool the presets are used with */
     GradientsPanel(String paletteTool) {
@@ -61,96 +63,74 @@ final class GradientsPanel implements PluginPanel {
     @Override
     public Node create(PanelContext context) {
         this.panel = context;
-        rows = new VBox(6);
-        Label hint = new Label("Click a gradient to paint the selection with it (Palette tool).");
-        hint.setWrapText(true);
-        hint.setStyle("-fx-text-fill: -color-fg-muted; -fx-font-size: 11px;");
-        Button save = new Button("Save the hotbar as a gradient");
-        save.setMaxWidth(Double.MAX_VALUE);
-        save.setOnAction(e -> saveHotbar());
-        ScrollPane scroll = new ScrollPane(rows);
-        scroll.setFitToWidth(true);
-        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
-        VBox.setVgrow(scroll, Priority.ALWAYS);
-        VBox root = new VBox(8, hint, save, scroll);
-        root.setPadding(new Insets(10));
+        own = new VBox(Theme.MD);
+        builtIn = new VBox(Theme.MD);
+        Section yours = new Section("Your gradients", own)
+                .actions(Controls.iconButton(Icon.ADD, "Save the hotbar as a gradient…", this::saveHotbar));
+        PanelScaffold page = new PanelScaffold()
+                .add(yours, new Section("Built-in", builtIn))
+                .footer(Controls.hint("Click a gradient to paint the selection with it (Palette tool)."));
         // Icons need Minecraft's assets, which can load after the panel was first built.
         context.onShown(this::refresh);
         refresh();
-        return root;
+        return page;
     }
 
     private void refresh() {
         if (panel == null) return;
-        List<Node> out = new ArrayList<>();
-        List<Preset> own = load(panel.plugin());
-        for (Preset p : own) out.add(row(p));
-        for (Preset p : GradientPresets.BUILT_IN) out.add(row(p));
-        rows.getChildren().setAll(out);
+        List<Node> mine = new ArrayList<>();
+        for (Preset p : load(panel.plugin())) mine.add(row(p));
+        if (mine.isEmpty()) {
+            mine.add(new EmptyState(null, "No gradients saved.")
+                    .hint("Put a gradient's blocks in the hotbar, first to last, then save it.")
+                    .action(Controls.button("Save the hotbar…", "Save the hotbar as a gradient", this::saveHotbar)));
+        }
+        own.getChildren().setAll(mine);
+        List<Node> built = new ArrayList<>();
+        for (Preset p : GradientPresets.BUILT_IN) built.add(row(p));
+        builtIn.getChildren().setAll(built);
+        // Minecraft's assets (the icons) can load after the page was built: draw it again shortly, for up to a minute.
+        BlockState first = GradientPresets.BUILT_IN.getFirst().blocks().getFirst();
+        if (panel.plugin().blockIcon(first).isEmpty() && iconRetries++ < 30) {
+            javafx.animation.PauseTransition retry = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(2));
+            retry.setOnFinished(e -> refresh());
+            retry.play();
+        }
     }
+
+    /** How often the page was redrawn waiting for block icons. */
+    private int iconRetries;
 
     private Node row(Preset p) {
         PluginContext ctx = panel.plugin();
         Label name = new Label(p.name());
-        name.setStyle("-fx-font-size: 11.5px;");
-        Region sp = new Region();
-        HBox.setHgrow(sp, Priority.ALWAYS);
-        Button hotbar = new Button("Hotbar");
-        hotbar.getStyleClass().add("flat");
-        hotbar.setStyle("-fx-font-size: 10.5px; -fx-padding: 1 6 1 6;");
-        hotbar.setTooltip(new Tooltip("Put these blocks in the hotbar"));
-        hotbar.setOnAction(e -> {
+        name.getStyleClass().add("bd-row-title");
+        name.setMinWidth(0);
+        Button hotbar = Controls.button("Hotbar", "Put these blocks in the hotbar", () -> {
             ctx.setHotbar(p.blocks());
             ctx.toast(p.name() + " is in the hotbar");
         });
-        HBox top = new HBox(6, name, sp, hotbar);
+        hotbar.getStyleClass().addAll("flat", "small");
+        HBox top = new HBox(Theme.XS, name, Controls.spacer(), hotbar);
         top.setAlignment(Pos.CENTER_LEFT);
         if (p.own()) {
-            Button delete = new Button("✕");
-            delete.getStyleClass().add("flat");
-            delete.setStyle("-fx-font-size: 10.5px; -fx-padding: 1 5 1 5;");
-            delete.setTooltip(new Tooltip("Delete this gradient"));
-            delete.setOnAction(e -> {
-                List<Preset> own = new ArrayList<>(load(ctx));
-                own.removeIf(o -> o.name().equals(p.name()));
-                save(ctx, own);
-                refresh();
-            });
+            Button delete = Controls.iconButton(Icon.TRASH, "Delete " + p.name() + "…", () -> delete(p));
+            delete.getStyleClass().add("small");
             top.getChildren().add(delete);
         }
-        HBox strip = new HBox(2);
-        strip.setAlignment(Pos.CENTER_LEFT);
+        FlowPane strip = new FlowPane(2, 2);
         for (BlockState st : p.blocks()) strip.getChildren().add(slot(ctx, st));
-        strip.setStyle("-fx-cursor: hand;");
+        strip.setCursor(Cursor.HAND);
         Tooltip.install(strip, new Tooltip("Paint the selection with " + p.name()));
         strip.setOnMouseClicked(e -> use(p));
-        VBox box = new VBox(3, top, strip);
-        box.setPadding(new Insets(4, 4, 6, 4));
-        return box;
+        return new VBox(Theme.XS, top, strip);
     }
 
-    /** A small hotbar slot: the block's icon, or its colour while no icons are available. */
+    /** A block slot: the block's icon, or its colour while no icons are available. */
     private static Node slot(PluginContext ctx, BlockState st) {
-        StackPane p = new StackPane();
-        p.getStyleClass().addAll("hotbar-slot", "option-slot");
-        p.setMinSize(SLOT, SLOT);
-        p.setPrefSize(SLOT, SLOT);
-        p.setMaxSize(SLOT, SLOT);
-        Optional<javafx.scene.image.Image> icon = ctx.blockIcon(st);
-        if (icon.isPresent()) {
-            ImageView iv = new ImageView(icon.get());
-            iv.setFitWidth(SLOT - 6);
-            iv.setFitHeight(SLOT - 6);
-            iv.setSmooth(false);
-            p.getChildren().add(iv);
-        } else {
-            Region swatch = new Region();
-            swatch.setMaxSize(SLOT - 8, SLOT - 8);
-            swatch.setStyle(String.format("-fx-background-color: #%06X; -fx-background-radius: 3;", ctx.blocks().averageColor(st) & 0xFFFFFF));
-            p.getChildren().add(swatch);
-        }
-        Tooltip.install(p, new Tooltip(ctx.blocks().displayName(st)));
-        return p;
+        Node n = Controls.blockIcon(ctx.blockIcon(st).orElse(null), ctx.blocks().averageColor(st), SLOT);
+        Tooltip.install(n, new Tooltip(ctx.blocks().displayName(st)));
+        return n;
     }
 
     /** Picks the Palette tool in Gradient mode with this preset's blocks. */
@@ -161,6 +141,15 @@ final class GradientsPanel implements PluginPanel {
         ctx.toast(p.name() + " · select blocks, then right-click or Enter to apply");
     }
 
+    private void delete(Preset p) {
+        PluginContext ctx = panel.plugin();
+        if (!ctx.ui().confirm("Delete gradient", "Delete “" + p.name() + "”? This can't be undone.", "Delete", true)) return;
+        List<Preset> mine = new ArrayList<>(load(ctx));
+        mine.removeIf(o -> o.name().equals(p.name()));
+        save(ctx, mine);
+        refresh();
+    }
+
     private void saveHotbar() {
         PluginContext ctx = panel.plugin();
         List<BlockState> blocks = ctx.hotbar().stream().filter(b -> !b.isAir()).toList();
@@ -168,16 +157,13 @@ final class GradientsPanel implements PluginPanel {
             ctx.toast("The hotbar is empty: put the blocks of your gradient in it first, first to last");
             return;
         }
-        TextInputDialog d = new TextInputDialog("My gradient");
-        d.setTitle("Save gradient");
-        d.setHeaderText("A name for this gradient of " + blocks.size() + " block" + (blocks.size() == 1 ? "" : "s"));
-        if (rows.getScene() != null) d.initOwner(rows.getScene().getWindow());
-        Optional<String> name = d.showAndWait().map(String::strip).filter(s -> !s.isEmpty());
+        Optional<String> name = ctx.ui().askText("Save gradient",
+                "A name for this gradient of " + blocks.size() + " block" + (blocks.size() == 1 ? "" : "s"), "My gradient");
         if (name.isEmpty()) return;
-        List<Preset> own = new ArrayList<>(load(ctx));
-        own.removeIf(o -> o.name().equals(name.get()));
-        own.addFirst(new Preset(name.get(), blocks, true));
-        save(ctx, own);
+        List<Preset> mine = new ArrayList<>(load(ctx));
+        mine.removeIf(o -> o.name().equals(name.get()));
+        mine.addFirst(new Preset(name.get(), blocks, true));
+        save(ctx, mine);
         refresh();
     }
 

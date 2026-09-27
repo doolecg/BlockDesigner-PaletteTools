@@ -33,6 +33,19 @@ class PaletteToolTest {
     }
 
     @Test
+    void copiedOptionsKeepTheirHelpAndUnits() {
+        Options o = tool.options();
+        WeatheringTransform w = new WeatheringTransform();
+        assertThat(o.unit("amount")).isEqualTo(w.options().unit("amount")).contains("%");
+        assertThat(o.help("amount")).isEqualTo(w.options().help("amount")).isPresent();
+        assertThat(o.help("family")).isPresent();
+        assertThat(o.unit("blend")).contains("%");
+        // Every option of every transform is there, of the same kind.
+        for (var t : java.util.List.of(new PaletteSwapTransform(), w, new GradientTransform()))
+            for (Options.Option x : t.options().all()) assertThat(o.get(x.key())).contains(x);
+    }
+
+    @Test
     void gradientRunsOnceOrRepeatedAndMirrored() {
         assertThat(GradientTransform.repeated(0.25, 1, false)).isCloseTo(0.25, within(1e-9));
         assertThat(GradientTransform.repeated(0.75, 2, false)).isCloseTo(0.5, within(1e-9));

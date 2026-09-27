@@ -47,7 +47,8 @@ final class GimpPaletteExporter implements PluginExporter {
     @Override
     public Options options() {
         return Options.builder()
-                .integer("min", "Leave out blocks used fewer times than", 1, 1, 10_000)
+                .integer("min", "Least use", 1, 1, 10_000).unit("blocks")
+                .help("Blocks used fewer times than this are left out.")
                 .choice("order", "Order", List.of("most used first", "by name"), "most used first")
                 .build();
     }

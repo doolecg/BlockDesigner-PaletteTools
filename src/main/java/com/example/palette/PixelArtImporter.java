@@ -29,7 +29,7 @@ final class PixelArtImporter implements PluginImporter {
 
     @Override
     public String displayName() {
-        return "Pixel art from an image";
+        return "Simple pixel art (wool, concrete or terracotta)";
     }
 
     @Override
@@ -42,7 +42,8 @@ final class PixelArtImporter implements PluginImporter {
         return Options.builder()
                 .choice("material", "Blocks", List.of("concrete", "wool", "terracotta"), "concrete")
                 .choice("facing", "Lay out", List.of("upright", "flat"), "upright")
-                .integer("maxSize", "Largest side (pixels)", 128, 8, 512)
+                .integer("maxSize", "Largest side", 128, 8, 512).unit("px")
+                .help("Bigger pictures are scaled down to this; one pixel is one block.")
                 .build();
     }
 

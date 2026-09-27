@@ -1,6 +1,7 @@
 package com.example.palette;
 
 import io.blockdesigner.core.model.BlockPos;
+import io.blockdesigner.core.model.BlockState;
 import io.blockdesigner.core.model.Box;
 import io.blockdesigner.core.model.Layer;
 import io.blockdesigner.plugin.PanelContext;
@@ -8,31 +9,46 @@ import io.blockdesigner.plugin.PluginContext;
 import io.blockdesigner.plugin.PluginPanel;
 import io.blockdesigner.plugin.SceneEvent;
 import io.blockdesigner.plugin.Subscription;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
+import io.blockdesigner.plugin.ui.Controls;
+import io.blockdesigner.plugin.ui.EmptyState;
+import io.blockdesigner.plugin.ui.Icon;
+import io.blockdesigner.plugin.ui.ItemList;
+import io.blockdesigner.plugin.ui.ItemRow;
+import io.blockdesigner.plugin.ui.PanelScaffold;
+import javafx.animation.PauseTransition;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.util.Duration;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * Lists the blocks of the selection (or of every visible layer when nothing is selected) with a colour swatch and a
- * count, most used first. Listens for scene events and only recounts while it is on screen.
+ * Lists the blocks of the selection (or of every visible layer when nothing is selected) with their icon and a count,
+ * most used first, with a filter on top and what is counted at the bottom. Listens for scene events and recounts
+ * (a quarter of a second after the last change) only while it is on screen.
  */
 final class PalettePanel implements PluginPanel {
+    /** One kind of block and how many there are. */
+    record Entry(String id, String name, long count, Image icon, int color) {
+    }
+
     private final List<Subscription> subscriptions = new ArrayList<>();
     // JavaFX nodes are only made in create(): the plugin is enabled before the panel is ever shown.
-    private VBox rows;
-    private Label heading;
+    private final ObservableList<Entry> entries = FXCollections.observableArrayList();
+    private FilteredList<Entry> shown;
+    private Label status;
+    private EmptyState empty;
+    private PauseTransition later;
     private PanelContext panel;
     private boolean stale = true;
 
@@ -55,9 +71,11 @@ final class PalettePanel implements PluginPanel {
     @Override
     public Node create(PanelContext context) {
         this.panel = context;
-        rows = new VBox(2);
-        heading = new Label();
         PluginContext ctx = context.plugin();
+        later = new PauseTransition(Duration.millis(250));
+        later.setOnFinished(e -> {
+            if (panel != null && panel.isShowing()) refresh();
+        });
         // Any of these can change what the panel shows; events come at most once per frame.
         subscriptions.add(ctx.on(SceneEvent.BlocksChanged.class, e -> changed()));
         subscriptions.add(ctx.on(SceneEvent.SelectionChanged.class, e -> changed()));
@@ -67,21 +85,31 @@ final class PalettePanel implements PluginPanel {
             if (stale) refresh();
         });
 
-        // Looked-up colours from the theme (-color-fg-muted…) keep the panel right in every theme, light or dark.
-        heading.setStyle("-fx-text-fill: -color-fg-muted; -fx-font-size: 11px;");
-        ScrollPane scroll = new ScrollPane(rows);
-        scroll.setFitToWidth(true);
-        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
-        VBox.setVgrow(scroll, Priority.ALWAYS);
-        VBox root = new VBox(8, heading, scroll);
-        root.setPadding(new Insets(10));
+        TextField search = Controls.search("Filter blocks");
+        shown = new FilteredList<>(entries);
+        search.textProperty().addListener((o, a, text) -> {
+            String q = text.strip().toLowerCase(Locale.ROOT);
+            shown.setPredicate(q.isEmpty() ? null : e -> e.name().toLowerCase(Locale.ROOT).contains(q) || e.id().contains(q));
+        });
+        empty = new EmptyState(Icon.INFO, "No blocks here.").hint("Build something, or select blocks to count them.");
+        ItemList<Entry> list = new ItemList<Entry>(e -> (e.icon() != null ? ItemRow.of(e.name()).image(e.icon()) : ItemRow.of(e.name()).swatch(e.color()))
+                .trailing(Controls.caption(String.format("%,d", e.count())))
+                .tooltip(e.id()))
+                .empty(empty);
+        list.setItems(shown);
+        status = Controls.caption("");
+
+        PanelScaffold page = new PanelScaffold();
+        page.add(search);
+        page.grow(list);
+        page.footer(status);
         refresh();
-        return root;
+        return page;
     }
 
     private void changed() {
         stale = true;
-        if (panel != null && panel.isShowing()) refresh();
+        if (panel != null && panel.isShowing()) later.playFromStart();
     }
 
     private void refresh() {
@@ -99,37 +127,36 @@ final class PalettePanel implements PluginPanel {
                 counts.merge(st.name(), 1L, Long::sum);
             });
         }
-        heading.setText((sel.isPresent() ? "In the selection" : "In the visible layers") + " · " + counts.size() + " kinds of block");
+        String where = sel.isPresent() ? "In the selection" : "In the visible layers";
+        status.setText(where + " · " + counts.size() + (counts.size() == 1 ? " kind of block" : " kinds of block"));
+        empty.hint(sel.isPresent() ? "The selection holds no blocks." : "Build something, or select blocks to count them.");
         panel.setBadge(counts.isEmpty() ? null : String.valueOf(counts.size()));
         List<Map.Entry<String, Long>> sorted = new ArrayList<>(counts.entrySet());
         sorted.sort(Map.Entry.<String, Long>comparingByValue().reversed());
-        List<Node> out = new ArrayList<>();
-        for (var e : sorted.subList(0, Math.min(sorted.size(), 200))) out.add(row(ctx, e.getKey(), e.getValue()));
-        rows.getChildren().setAll(out);
+        List<Entry> out = new ArrayList<>(sorted.size());
+        for (var e : sorted) {
+            BlockState st = BlockState.of(e.getKey());
+            out.add(new Entry(e.getKey(), ctx.blocks().displayName(st), e.getValue(), ctx.blockIcon(st).orElse(null),
+                    ctx.blocks().averageColor(st)));
+        }
+        entries.setAll(out);
+        // Minecraft's assets (icons, colours) can load after the first count: look again shortly, for up to a minute.
+        if (!out.isEmpty() && out.stream().allMatch(e -> e.icon() == null) && iconRetries++ < 30) {
+            stale = true;
+            PauseTransition retry = new PauseTransition(Duration.seconds(2));
+            retry.setOnFinished(e -> changed());
+            retry.play();
+        }
     }
 
-    private static Node row(PluginContext ctx, String id, long count) {
-        var st = io.blockdesigner.core.model.BlockState.of(id);
-        Region swatch = new Region();
-        swatch.setMinSize(14, 14);
-        swatch.setMaxSize(14, 14);
-        swatch.setStyle(String.format("-fx-background-color: #%06X; -fx-background-radius: 3; -fx-border-color: -color-border-default; -fx-border-radius: 3;",
-                ctx.blocks().averageColor(st) & 0xFFFFFF));
-        Label name = new Label(ctx.blocks().displayName(st));
-        Region sp = new Region();
-        HBox.setHgrow(sp, Priority.ALWAYS);
-        Label n = new Label(String.format("%,d", count));
-        n.setStyle("-fx-text-fill: -color-fg-muted;");
-        HBox row = new HBox(8, swatch, name, sp, n);
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.setPadding(new Insets(3, 4, 3, 4));
-        return row;
-    }
+    /** How often the list was redrawn waiting for block icons. */
+    private int iconRetries;
 
     @Override
     public void dispose() {
         subscriptions.forEach(Subscription::cancel);
         subscriptions.clear();
+        if (later != null) later.stop();
         panel = null;
     }
 }

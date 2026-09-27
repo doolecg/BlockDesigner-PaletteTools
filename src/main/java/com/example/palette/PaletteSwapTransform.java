@@ -40,7 +40,8 @@ final class PaletteSwapTransform implements PluginTransform {
         return Options.builder()
                 .block("from", "Replace", BlockState.of("oak_planks"))
                 .block("to", "With", BlockState.of("spruce_planks"))
-                .toggle("family", "Every shape of the material (stairs, slabs, fences…)", true)
+                .toggle("family", "Every shape of the material", true)
+                .help("Stairs, slabs, fences and walls of the material change too, keeping their shape and facing.")
                 .build();
     }
 

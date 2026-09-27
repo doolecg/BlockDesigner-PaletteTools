@@ -6,5 +6,5 @@
   "description": "Block palette tools: a Palette tool that repaints the selection in the view (palette swap, weathering, gradients), the same three as transforms, a Palette panel, a colour palette exporter and a pixel art importer.",
   "updates": "https://github.com/doolecg/BlockDesigner-PaletteTools",
   "main": "com.example.palette.PaletteToolsPlugin",
-  "api": 5
+  "api": 6
 }

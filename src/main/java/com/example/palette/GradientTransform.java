@@ -47,10 +47,13 @@ final class GradientTransform implements PluginTransform {
                         BlockState.of("andesite"), BlockState.of("diorite")))
                 .choice("axis", "Along", List.of("up", "down", "east", "west", "south", "north", OUT, IN, OUT_FLAT), "up")
                 .choice("style", "Edges", List.of(BLEND, DITHER, BANDS), BLEND)
-                .decimal("blend", "Blend", 0.5, 0, 1)
+                .help("Random blend mixes neighbouring blocks at random, Dither pattern in a regular pattern, Hard bands keeps sharp edges.")
+                .decimal("blend", "Blend", 0.5, 0, 1).unit("%")
                 .showWhen("style", BLEND, DITHER)
+                .help("How far each block reaches into its neighbours.")
                 .integer("repeat", "Repeats", 1, 1, 16)
-                .toggle("mirror", "Mirror the repeats (1 2 3 2 1)", false)
+                .toggle("mirror", "Mirror the repeats", false)
+                .help("Runs back and forth (1 2 3 2 1) instead of starting over.")
                 .build();
     }
 

@@ -65,21 +65,17 @@ final class PaletteTool implements PluginTool {
     public Options options() {
         Options.Builder b = Options.builder().choice("mode", "Mode", List.copyOf(modes.keySet()), modes.keySet().iterator().next());
         modes.forEach((name, t) -> {
-            for (Options.Option o : t.options().all()) {
-                switch (o) {
-                    case Options.IntegerOption i -> b.integer(i.key(), i.label(), i.defaultValue(), i.min(), i.max());
-                    case Options.DecimalOption d -> b.decimal(d.key(), d.label(), d.defaultValue(), d.min(), d.max());
-                    case Options.ToggleOption g -> b.toggle(g.key(), g.label(), g.defaultValue());
-                    case Options.BlockOption k -> b.block(k.key(), k.label(), k.defaultValue());
-                    case Options.BlockListOption l -> b.blockList(l.key(), l.label(), l.defaultValue());
-                    case Options.ChoiceOption c -> b.choice(c.key(), c.label(), c.values(), c.defaultValue());
-                    case Options.TextOption x -> b.text(x.key(), x.label(), x.defaultValue());
-                    case Options.FileOption f -> b.file(f.key(), f.label(), f.extensions());
-                }
+            Options own = t.options();
+            for (Options.Option o : own.all()) {
+                b.option(o);
+                // Its help, unit and on/off toggle come along, so the tool's options read like the transform's.
+                own.help(o.key()).ifPresent(b::help);
+                own.unit(o.key()).ifPresent(b::unit);
+                own.enabledWhen(o.key()).ifPresent(b::enabledWhen);
                 // Shown only in its own mode, and still only when the transform's own conditions hold (the gradient's
                 // blend only with soft edges).
                 b.showWhen("mode", name);
-                for (Options.Condition c : t.options().conditions(o.key())) b.showWhen(c.choiceKey(), c.values().toArray(String[]::new));
+                for (Options.Condition c : own.conditions(o.key())) b.showWhen(c.choiceKey(), c.values().toArray(String[]::new));
             }
         });
         return b.build();
