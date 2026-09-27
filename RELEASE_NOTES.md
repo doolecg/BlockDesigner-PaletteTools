@@ -1,3 +1,14 @@
+# Palette Tools 1.1.3
+
+Kept up to date with BlockDesigner 0.4.23: built and tested against its plugin API. Nothing changes in how it works.
+
+**Needs BlockDesigner 0.4.17 or later** (plugin API 5). BlockDesigner 0.4.16 and later update to it by themselves.
+
+## Changed
+- Built against the BlockDesigner 0.4.23 plugin API.
+
+---
+
 # Palette Tools 1.1.2
 
 Kept up to date with BlockDesigner 0.4.22: built and tested against its plugin API. Nothing changes in how it works.
